@@ -15,6 +15,7 @@ class IncidentHandlerTests(unittest.TestCase):
         self.assertEqual(result["state"], "ALARM")
         self.assertEqual(result["resource_id"], "i-example")
         self.assertEqual(result["customer_impact"], "Not yet assessed")
+        self.assertTrue(result["deduplication_key"])
 
     def test_ok_state_creates_p3_record(self):
         result = handler({
@@ -35,5 +36,40 @@ class IncidentHandlerTests(unittest.TestCase):
                 "state": "UNKNOWN",
                 "region": "us-east-1",
             })
+
+    def test_same_alarm_and_resource_produce_same_key(self):
+        event = {
+            "alarm_name": "HighCPU",
+            "state": "ALARM",
+            "region": "us-east-1",
+            "resource_id": "i-example",
+        }
+        first = handler(event)
+        second = handler(event)
+
+        self.assertEqual(
+            first["deduplication_key"],
+            second["deduplication_key"],
+        )
+        self.assertNotEqual(first["created_at"], second["created_at"])
+
+    def test_different_resources_produce_different_keys(self):
+        base_event = {
+            "alarm_name": "HighCPU",
+            "state": "ALARM",
+            "region": "us-east-1",
+            "resource_id": "i-example-1",
+        }
+        other_event = {
+            **base_event,
+            "resource_id": "i-example-2",
+        }
+
+        self.assertNotEqual(
+            handler(base_event)["deduplication_key"],
+            handler(other_event)["deduplication_key"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

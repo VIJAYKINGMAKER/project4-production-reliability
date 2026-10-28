@@ -1,4 +1,5 @@
-﻿from datetime import datetime, timezone
+﻿
+from datetime import datetime, timezone
 
 
 def handler(event, context=None):
@@ -9,6 +10,10 @@ def handler(event, context=None):
         raise ValueError("Missing required fields: " + ", ".join(missing))
 
     state = str(event["state"]).upper()
+
+    if state not in ("ALARM", "OK"):
+        raise ValueError(f"Unsupported alarm state: {state}")
+
     severity = "P2" if state == "ALARM" else "P3"
 
     return {

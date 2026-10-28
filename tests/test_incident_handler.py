@@ -1,4 +1,5 @@
-﻿import unittest
+﻿
+import unittest
 from src.incident_handler import handler
 
 
@@ -27,6 +28,12 @@ class IncidentHandlerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             handler({"alarm_name": "HighCPU", "state": "ALARM"})
 
-
+    def test_unsupported_state_fails(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported alarm state"):
+            handler({
+                "alarm_name": "HighCPU",
+                "state": "UNKNOWN",
+                "region": "us-east-1",
+            })
 if __name__ == "__main__":
     unittest.main()
